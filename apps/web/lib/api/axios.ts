@@ -17,7 +17,13 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("access_token");
-      window.location.href = "/login";
+      
+      const isLoginRequest = error.config?.url?.includes('/auth/login');
+      const isAlreadyOnLoginPage = typeof window !== 'undefined' && window.location.pathname === '/login';
+      
+      if (!isLoginRequest && !isAlreadyOnLoginPage) {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, X, FileText, CheckCircle, Clock } from "lucide-react";
+import { Plus, X, FileText, CheckCircle, Clock, Send, Inbox, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import api from "@/lib/api/axios";
+import CloudinaryUploader from "@/components/CloudinaryUploader";
 
 const docSchema = z.object({
   clientId: z.coerce.number().min(1, "Select a client"),
   fileName: z.string().min(1, "File name required"),
   fileUrl: z.string().url("Valid URL required"),
+  signingMethod: z.enum(["EMAIL", "TOTP"]),
 });
 
 type DocForm = z.infer<typeof docSchema>;
@@ -26,6 +28,8 @@ type Document = {
   signedAt: string | null;
   clientId: number;
   createdAt: string;
+  uploadedBy: "CA" | "CLIENT";
+  signingMethod: "EMAIL" | "TOTP";
 };
 
 type Client = {
@@ -41,17 +45,19 @@ export default function DocumentsPage() {
   const [showModal, setShowModal] = useState(false);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"ALL" | "SIGNED" | "UNSIGNED">(
-    "ALL",
-  );
+  const [activeTab, setActiveTab] = useState<"SENT" | "RECEIVED">("SENT");
 
   const {
     register,
     handleSubmit,
+    setValue,
     reset,
     formState: { errors },
   } = useForm<DocForm>({
     resolver: zodResolver(docSchema),
+    defaultValues: {
+      signingMethod: "EMAIL",
+    },
   });
 
   const fetchAll = async () => {
@@ -79,7 +85,10 @@ export default function DocumentsPage() {
     try {
       setAdding(true);
       setError("");
-      await api.post("/documents", data);
+      await api.post("/documents", {
+        ...data,
+        uploadedBy: "CA",
+      });
       await fetchAll();
       setShowModal(false);
       reset();
@@ -90,6 +99,13 @@ export default function DocumentsPage() {
     }
   };
 
+  const handleCloudinarySuccess = (url: string, name: string) => {
+    setValue("fileUrl", url, { shouldValidate: true });
+    // Remove extension for default name
+    const defaultName = name.replace(/\.[^/.]+$/, "");
+    setValue("fileName", defaultName, { shouldValidate: true });
+  };
+
   const allDocs = clients.flatMap((c) =>
     c.documents.map((d) => ({
       ...d,
@@ -98,26 +114,10 @@ export default function DocumentsPage() {
     })),
   );
 
-  const filtered =
-    activeTab === "ALL"
-      ? allDocs
-      : activeTab === "SIGNED"
-        ? allDocs.filter((d) => d.isSigned)
-        : allDocs.filter((d) => !d.isSigned);
+  const sentDocs = allDocs.filter((d) => d.uploadedBy === "CA");
+  const receivedDocs = allDocs.filter((d) => d.uploadedBy === "CLIENT");
 
-  const tabs = [
-    { key: "ALL", label: "All", count: allDocs.length },
-    {
-      key: "SIGNED",
-      label: "Signed",
-      count: allDocs.filter((d) => d.isSigned).length,
-    },
-    {
-      key: "UNSIGNED",
-      label: "Unsigned",
-      count: allDocs.filter((d) => !d.isSigned).length,
-    },
-  ];
+  const filtered = activeTab === "SENT" ? sentDocs : receivedDocs;
 
   return (
     <div>
@@ -143,8 +143,7 @@ export default function DocumentsPage() {
             Documents
           </h1>
           <p style={{ fontSize: 13, color: "#999" }}>
-            {allDocs.length} total · {allDocs.filter((d) => d.isSigned).length}{" "}
-            signed
+            {sentDocs.length} sent · {receivedDocs.length} received from clients
           </p>
         </div>
         <Button
@@ -163,41 +162,74 @@ export default function DocumentsPage() {
         </Button>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 20 }}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
+      {/* Main Tabs */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 24, borderBottom: "1px solid #ececec", paddingBottom: 10 }}>
+        <button
+          onClick={() => setActiveTab("SENT")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: activeTab === "SENT" ? 600 : 500,
+            color: activeTab === "SENT" ? "#111" : "#888",
+            background: activeTab === "SENT" ? "#fff" : "transparent",
+            border: activeTab === "SENT" ? "1px solid #e0e0e0" : "1px solid transparent",
+            boxShadow: activeTab === "SENT" ? "0 1px 3px rgba(0,0,0,0.05)" : "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            transition: "all 0.15s",
+          }}
+        >
+          <Send size={14} />
+          Sent to Clients
+          <span
             style={{
-              padding: "7px 14px",
-              borderRadius: 8,
-              fontSize: 13,
-              fontWeight: activeTab === tab.key ? 600 : 400,
-              color: activeTab === tab.key ? "#111" : "#888",
-              background: activeTab === tab.key ? "#f0f0f0" : "transparent",
-              border: `1px solid ${activeTab === tab.key ? "#e0e0e0" : "transparent"}`,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
+              fontSize: 10,
+              fontWeight: 700,
+              background: activeTab === "SENT" ? "#111" : "#f0f0f0",
+              color: activeTab === "SENT" ? "#fff" : "#888",
+              borderRadius: 100,
+              padding: "1px 6px",
             }}
           >
-            {tab.label}
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                background: activeTab === tab.key ? "#fff" : "#f0f0f0",
-                color: "#888",
-                borderRadius: 100,
-                padding: "1px 7px",
-              }}
-            >
-              {tab.count}
-            </span>
-          </button>
-        ))}
+            {sentDocs.length}
+          </span>
+        </button>
+        <button
+          onClick={() => setActiveTab("RECEIVED")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: activeTab === "RECEIVED" ? 600 : 500,
+            color: activeTab === "RECEIVED" ? "#111" : "#888",
+            background: activeTab === "RECEIVED" ? "#fff" : "transparent",
+            border: activeTab === "RECEIVED" ? "1px solid #e0e0e0" : "1px solid transparent",
+            boxShadow: activeTab === "RECEIVED" ? "0 1px 3px rgba(0,0,0,0.05)" : "none",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            transition: "all 0.15s",
+          }}
+        >
+          <Inbox size={14} />
+          Received from Clients
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              background: activeTab === "RECEIVED" ? "#111" : "#f0f0f0",
+              color: activeTab === "RECEIVED" ? "#fff" : "#888",
+              borderRadius: 100,
+              padding: "1px 6px",
+            }}
+          >
+            {receivedDocs.length}
+          </span>
+        </button>
       </div>
 
       {/* Table */}
@@ -212,26 +244,41 @@ export default function DocumentsPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr",
+            gridTemplateColumns: activeTab === "SENT" ? "2fr 1.2fr 1fr 1fr 1fr" : "2fr 1.5fr 1.5fr",
             padding: "12px 20px",
             borderBottom: "1px solid #f0f0f0",
             background: "#fafafa",
           }}
         >
-          {["Document", "Client", "Uploaded", "Status"].map((h) => (
-            <span
-              key={h}
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "#aaa",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              {h}
-            </span>
-          ))}
+          {activeTab === "SENT"
+            ? ["Document", "Client", "Uploaded Date", "Signing Mode", "Status"].map((h) => (
+                <span
+                  key={h}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#aaa",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  {h}
+                </span>
+              ))
+            : ["Document", "Client Name", "Received Date"].map((h) => (
+                <span
+                  key={h}
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#aaa",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  {h}
+                </span>
+              ))}
         </div>
 
         {loading ? (
@@ -255,19 +302,17 @@ export default function DocumentsPage() {
               key={doc.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: "2fr 1.5fr 1.5fr 1fr",
+                gridTemplateColumns: activeTab === "SENT" ? "2fr 1.2fr 1fr 1fr 1fr" : "2fr 1.5fr 1.5fr",
                 padding: "14px 20px",
-                borderBottom:
-                  i < filtered.length - 1 ? "1px solid #f8f8f8" : "none",
+                borderBottom: i < filtered.length - 1 ? "1px solid #f8f8f8" : "none",
                 alignItems: "center",
+                transition: "background 0.1s",
               }}
               onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLDivElement).style.background =
-                  "#fafafa")
+                ((e.currentTarget as HTMLDivElement).style.background = "#fafafa")
               }
               onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLDivElement).style.background =
-                  "transparent")
+                ((e.currentTarget as HTMLDivElement).style.background = "transparent")
               }
             >
               {/* File */}
@@ -295,11 +340,12 @@ export default function DocumentsPage() {
                     rel="noreferrer"
                     style={{
                       fontSize: 11,
-                      color: "#aaa",
+                      color: "#3b82f6",
+                      fontWeight: 500,
                       textDecoration: "none",
                     }}
                   >
-                    View file ↗
+                    View File ↗
                   </a>
                 </div>
               </div>
@@ -339,25 +385,42 @@ export default function DocumentsPage() {
                 })}
               </p>
 
-              {/* Status */}
-              {doc.isSigned ? (
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <CheckCircle size={13} color="#16a34a" />
-                  <span
-                    style={{ fontSize: 12, fontWeight: 600, color: "#16a34a" }}
-                  >
-                    Signed
-                  </span>
-                </div>
-              ) : (
-                <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                  <Clock size={13} color="#d97706" />
-                  <span
-                    style={{ fontSize: 12, fontWeight: 600, color: "#d97706" }}
-                  >
-                    Pending
-                  </span>
-                </div>
+              {/* Sent-only fields */}
+              {activeTab === "SENT" && (
+                <>
+                  {/* Signing Method */}
+                  <div>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        fontWeight: 600,
+                        background: doc.signingMethod === "TOTP" ? "#f5f3ff" : "#f0fdf4",
+                        color: doc.signingMethod === "TOTP" ? "#6d28d9" : "#15803d",
+                        padding: "3px 8px",
+                        borderRadius: 6,
+                      }}
+                    >
+                      {doc.signingMethod === "TOTP" ? "🔑 Google Auth" : "📧 Email OTP"}
+                    </span>
+                  </div>
+
+                  {/* Status */}
+                  {doc.isSigned ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <CheckCircle size={13} color="#16a34a" />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#16a34a" }}>
+                        Signed
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <Clock size={13} color="#d97706" />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "#d97706" }}>
+                        Pending
+                      </span>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           ))
@@ -384,8 +447,10 @@ export default function DocumentsPage() {
               borderRadius: 18,
               padding: "32px",
               width: "100%",
-              maxWidth: 440,
+              maxWidth: 460,
               boxShadow: "0 24px 60px rgba(0,0,0,0.12)",
+              maxHeight: "90vh",
+              overflowY: "auto",
             }}
           >
             <div
@@ -401,7 +466,7 @@ export default function DocumentsPage() {
                   Upload Document
                 </h2>
                 <p style={{ fontSize: 13, color: "#aaa", marginTop: 3 }}>
-                  Send document to client for signing
+                  Send a new document to client for signing
                 </p>
               </div>
               <button
@@ -439,11 +504,26 @@ export default function DocumentsPage() {
 
             <form
               onSubmit={handleSubmit(onSubmit)}
-              style={{ display: "flex", flexDirection: "column", gap: 16 }}
+              style={{ display: "flex", flexDirection: "column", gap: 18 }}
             >
+              {/* File Uploader */}
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <Label style={{ fontSize: 12, fontWeight: 500, color: "#555" }}>
-                  Client
+                <Label style={{ fontSize: 12, fontWeight: 600, color: "#555" }}>
+                  File Document
+                </Label>
+                <CloudinaryUploader onUploadSuccess={handleCloudinarySuccess} />
+                <input type="hidden" {...register("fileUrl")} />
+                {errors.fileUrl && (
+                  <p style={{ fontSize: 11, color: "#dc2626" }}>
+                    {errors.fileUrl.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Form Input fields */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <Label style={{ fontSize: 12, fontWeight: 600, color: "#555" }}>
+                  Client Recipient
                 </Label>
                 <select
                   {...register("clientId")}
@@ -472,11 +552,11 @@ export default function DocumentsPage() {
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <Label style={{ fontSize: 12, fontWeight: 500, color: "#555" }}>
-                  File Name
+                <Label style={{ fontSize: 12, fontWeight: 600, color: "#555" }}>
+                  Document Title / File Name
                 </Label>
                 <Input
-                  placeholder="ITR_2025_26.pdf"
+                  placeholder="ITR_Filing_2025-26"
                   {...register("fileName")}
                   style={{
                     height: 40,
@@ -492,28 +572,67 @@ export default function DocumentsPage() {
                 )}
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <Label style={{ fontSize: 12, fontWeight: 500, color: "#555" }}>
-                  File URL
+              {/* Verification method selection (CA Choice) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <Label style={{ fontSize: 12, fontWeight: 600, color: "#555" }}>
+                  Required Signature Method
                 </Label>
-                <Input
-                  placeholder="https://..."
-                  {...register("fileUrl")}
-                  style={{
-                    height: 40,
-                    fontSize: 13,
-                    borderColor: "#e4e4e4",
-                    borderRadius: 9,
-                  }}
-                />
-                {errors.fileUrl && (
-                  <p style={{ fontSize: 11, color: "#dc2626" }}>
-                    {errors.fileUrl.message}
-                  </p>
-                )}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <label
+                    style={{
+                      border: "1px solid #e4e4e4",
+                      borderRadius: 10,
+                      padding: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                      cursor: "pointer",
+                      background: "#fafafa",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "#111" }}>
+                      <input
+                        type="radio"
+                        value="EMAIL"
+                        {...register("signingMethod")}
+                        style={{ accentColor: "#111" }}
+                      />
+                      📧 Email OTP
+                    </div>
+                    <span style={{ fontSize: 10, color: "#aaa", paddingLeft: 20 }}>
+                      Quick 6-digit code sent to client's email.
+                    </span>
+                  </label>
+
+                  <label
+                    style={{
+                      border: "1px solid #e4e4e4",
+                      borderRadius: 10,
+                      padding: "12px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: 4,
+                      cursor: "pointer",
+                      background: "#fafafa",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "#111" }}>
+                      <input
+                        type="radio"
+                        value="TOTP"
+                        {...register("signingMethod")}
+                        style={{ accentColor: "#111" }}
+                      />
+                      🔑 Google Auth
+                    </div>
+                    <span style={{ fontSize: 10, color: "#aaa", paddingLeft: 20 }}>
+                      Maximum security using Google Authenticator.
+                    </span>
+                  </label>
+                </div>
               </div>
 
-              <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+              <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
                 <Button
                   type="button"
                   onClick={() => {
@@ -546,7 +665,7 @@ export default function DocumentsPage() {
                     borderRadius: 9,
                   }}
                 >
-                  {adding ? "Uploading..." : "Upload"}
+                  {adding ? "Uploading..." : "Upload & Send"}
                 </Button>
               </div>
             </form>

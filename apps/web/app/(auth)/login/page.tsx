@@ -35,11 +35,14 @@ export default function LoginPage() {
       setLoading(true);
       setError('');
       const res = await authApi.login(data);
+      // Store token temporarily so the me() call can use it in authorization headers
+      localStorage.setItem('access_token', res.access_token);
       const me = await authApi.me();
       setAuth(me, res.access_token);
       router.push(me.role === 'CA' ? '/ca' : '/client');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid credentials');
+      localStorage.removeItem('access_token');
     } finally {
       setLoading(false);
     }

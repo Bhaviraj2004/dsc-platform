@@ -7,6 +7,7 @@ type User = {
   id: number;
   email: string;
   role: Role;
+  totpEnabled: boolean;
 };
 
 type AuthStore = {
