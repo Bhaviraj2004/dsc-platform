@@ -77,7 +77,7 @@ export default function CloudinaryUploader({
         formData.append("upload_preset", uploadPreset);
 
         const response = await axios.post(
-          `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
+          `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
           formData,
           {
             onUploadProgress: (progressEvent) => {

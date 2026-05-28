@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, CheckCircle, Clock, X, Send, Inbox, ArrowUpRight, ShieldCheck, Mail } from "lucide-react";
+import { FileText, CheckCircle, Clock, X, Send, Inbox, ArrowUpRight, ShieldCheck, Mail, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

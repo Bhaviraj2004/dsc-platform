@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import api from "@/lib/api/axios";
 
 const tokenSchema = z.object({
-  clientId: z.coerce.number().min(1, "Select a client"),
+  clientId: z.number().min(1, "Select a client"),
   tokenBrand: z.string().min(1, "Token brand required"),
   expiryDate: z.string().min(1, "Expiry date required"),
   isHeldByCA: z.boolean().optional(),
@@ -423,7 +423,9 @@ export default function DscTokensPage() {
                   Client
                 </Label>
                 <select
-                  {...register("clientId")}
+                   {...register("clientId", {
+    valueAsNumber: true,
+  })}
                   style={{
                     height: 40,
                     fontSize: 13,

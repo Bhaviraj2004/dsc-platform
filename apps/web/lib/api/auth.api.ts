@@ -18,7 +18,9 @@ export type AuthResponse = {
 export type MeResponse = {
   id: number;
   email: string;
+  // name: string;
   role: 'CA' | 'CLIENT';
+  totpEnabled: boolean;
 };
 
 export const authApi = {

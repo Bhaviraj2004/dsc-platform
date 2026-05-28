@@ -12,6 +12,7 @@ import api from '@/lib/api/axios';
 
 const clientSchema = z.object({
   fullName: z.string().min(2, 'Name required'),
+  email: z.string().email('Valid email required'),
   pan: z.string().regex(/^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$/, 'Invalid PAN format eg. ABCDE1234F').transform(v => v.toUpperCase()),
   aadhaar: z.string().regex(/^[0-9]{12}$/, 'Aadhaar must be 12 digits').optional().or(z.literal('')),
   gst: z.string().optional().or(z.literal('')),
@@ -31,6 +32,7 @@ type Client = {
   address: string;
   filings: any[];
   dscTokens: any[];
+  user?: { email: string };
 };
 
 export default function ClientsPage() {
@@ -154,7 +156,7 @@ export default function ClientsPage() {
                 </div>
                 <div>
                   <p style={{ fontSize: 13, fontWeight: 600, color: '#111' }}>{client.fullName}</p>
-                  <p style={{ fontSize: 11, color: '#bbb' }}>{client.gst || 'No GST'}</p>
+                  <p style={{ fontSize: 11, color: '#bbb' }}>{client.user?.email || client.gst || 'No GST'}</p>
                 </div>
               </div>
 
@@ -226,6 +228,7 @@ export default function ClientsPage() {
             <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {[
                 { id: 'fullName', label: 'Full Name', placeholder: 'Ramesh Gupta', type: 'text' },
+                { id: 'email', label: 'Client Email (Login & OTP)', placeholder: 'ramesh@gmail.com', type: 'email' },
                 { id: 'pan', label: 'PAN Number', placeholder: 'ABCDE1234F', type: 'text' },
                 { id: 'phone', label: 'Phone', placeholder: '9876543210', type: 'text' },
                 { id: 'aadhaar', label: 'Aadhaar (optional)', placeholder: '123456789012', type: 'text' },

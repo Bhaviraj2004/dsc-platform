@@ -306,9 +306,9 @@ export default function ClientDashboard() {
                       style={{
                         fontSize: 11,
                         fontWeight: 600,
-                        color: s.color,
-                        background: s.bg,
-                        border: `1px solid ${s.border}`,
+                        color: s?.color,
+                        background: s?.bg,
+                        border: `1px solid ${s?.border}`,
                         borderRadius: 6,
                         padding: "3px 8px",
                       }}

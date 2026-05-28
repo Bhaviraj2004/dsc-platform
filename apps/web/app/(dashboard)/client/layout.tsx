@@ -17,6 +17,7 @@ import {
 import api from "@/lib/api/axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/client" },
@@ -123,7 +124,7 @@ export default function ClientLayout({
         >
           {/* Logo */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 30, justifyContent: "center" }}>
-            <div style={{ width: 32, height: 32, background: "#111", borderRadius: 8, display: "flex", alignItems: "center", justifyCenter: "center", justifyContent: "center" }}>
+            <div style={{ width: 32, height: 32, background: "#111", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Shield size={16} color="#fff" />
             </div>
             <span style={{ fontSize: 14, fontWeight: 700, color: "#111", letterSpacing: "-0.2px" }}>DSC Platform</span>

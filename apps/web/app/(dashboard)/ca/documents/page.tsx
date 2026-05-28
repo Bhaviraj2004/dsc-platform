@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, X, FileText, CheckCircle, Clock, Send, Inbox, ShieldCheck } from "lucide-react";
+import {
+  Plus,
+  X,
+  FileText,
+  CheckCircle,
+  Clock,
+  Send,
+  Inbox,
+  ShieldCheck,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,7 +21,7 @@ import api from "@/lib/api/axios";
 import CloudinaryUploader from "@/components/CloudinaryUploader";
 
 const docSchema = z.object({
-  clientId: z.coerce.number().min(1, "Select a client"),
+  clientId: z.number().min(1, "Select a client"),
   fileName: z.string().min(1, "File name required"),
   fileUrl: z.string().url("Valid URL required"),
   signingMethod: z.enum(["EMAIL", "TOTP"]),
@@ -48,17 +57,20 @@ export default function DocumentsPage() {
   const [activeTab, setActiveTab] = useState<"SENT" | "RECEIVED">("SENT");
 
   const {
-    register,
-    handleSubmit,
-    setValue,
-    reset,
-    formState: { errors },
-  } = useForm<DocForm>({
-    resolver: zodResolver(docSchema),
-    defaultValues: {
-      signingMethod: "EMAIL",
-    },
-  });
+  register,
+  handleSubmit,
+  setValue,
+  reset,
+  formState: { errors },
+} = useForm<DocForm>({
+  resolver: zodResolver(docSchema),
+  defaultValues: {
+    clientId: 0,
+    fileName: "",
+    fileUrl: "",
+    signingMethod: "EMAIL",
+  },
+});
 
   const fetchAll = async () => {
     try {
@@ -163,7 +175,15 @@ export default function DocumentsPage() {
       </div>
 
       {/* Main Tabs */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 24, borderBottom: "1px solid #ececec", paddingBottom: 10 }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 6,
+          marginBottom: 24,
+          borderBottom: "1px solid #ececec",
+          paddingBottom: 10,
+        }}
+      >
         <button
           onClick={() => setActiveTab("SENT")}
           style={{
@@ -173,8 +193,12 @@ export default function DocumentsPage() {
             fontWeight: activeTab === "SENT" ? 600 : 500,
             color: activeTab === "SENT" ? "#111" : "#888",
             background: activeTab === "SENT" ? "#fff" : "transparent",
-            border: activeTab === "SENT" ? "1px solid #e0e0e0" : "1px solid transparent",
-            boxShadow: activeTab === "SENT" ? "0 1px 3px rgba(0,0,0,0.05)" : "none",
+            border:
+              activeTab === "SENT"
+                ? "1px solid #e0e0e0"
+                : "1px solid transparent",
+            boxShadow:
+              activeTab === "SENT" ? "0 1px 3px rgba(0,0,0,0.05)" : "none",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -206,8 +230,12 @@ export default function DocumentsPage() {
             fontWeight: activeTab === "RECEIVED" ? 600 : 500,
             color: activeTab === "RECEIVED" ? "#111" : "#888",
             background: activeTab === "RECEIVED" ? "#fff" : "transparent",
-            border: activeTab === "RECEIVED" ? "1px solid #e0e0e0" : "1px solid transparent",
-            boxShadow: activeTab === "RECEIVED" ? "0 1px 3px rgba(0,0,0,0.05)" : "none",
+            border:
+              activeTab === "RECEIVED"
+                ? "1px solid #e0e0e0"
+                : "1px solid transparent",
+            boxShadow:
+              activeTab === "RECEIVED" ? "0 1px 3px rgba(0,0,0,0.05)" : "none",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -244,14 +272,23 @@ export default function DocumentsPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: activeTab === "SENT" ? "2fr 1.2fr 1fr 1fr 1fr" : "2fr 1.5fr 1.5fr",
+            gridTemplateColumns:
+              activeTab === "SENT"
+                ? "2fr 1.2fr 1fr 1fr 1fr"
+                : "2fr 1.5fr 1.5fr",
             padding: "12px 20px",
             borderBottom: "1px solid #f0f0f0",
             background: "#fafafa",
           }}
         >
           {activeTab === "SENT"
-            ? ["Document", "Client", "Uploaded Date", "Signing Mode", "Status"].map((h) => (
+            ? [
+                "Document",
+                "Client",
+                "Uploaded Date",
+                "Signing Mode",
+                "Status",
+              ].map((h) => (
                 <span
                   key={h}
                   style={{
@@ -302,17 +339,23 @@ export default function DocumentsPage() {
               key={doc.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: activeTab === "SENT" ? "2fr 1.2fr 1fr 1fr 1fr" : "2fr 1.5fr 1.5fr",
+                gridTemplateColumns:
+                  activeTab === "SENT"
+                    ? "2fr 1.2fr 1fr 1fr 1fr"
+                    : "2fr 1.5fr 1.5fr",
                 padding: "14px 20px",
-                borderBottom: i < filtered.length - 1 ? "1px solid #f8f8f8" : "none",
+                borderBottom:
+                  i < filtered.length - 1 ? "1px solid #f8f8f8" : "none",
                 alignItems: "center",
                 transition: "background 0.1s",
               }}
               onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLDivElement).style.background = "#fafafa")
+                ((e.currentTarget as HTMLDivElement).style.background =
+                  "#fafafa")
               }
               onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLDivElement).style.background = "transparent")
+                ((e.currentTarget as HTMLDivElement).style.background =
+                  "transparent")
               }
             >
               {/* File */}
@@ -394,28 +437,48 @@ export default function DocumentsPage() {
                       style={{
                         fontSize: 11,
                         fontWeight: 600,
-                        background: doc.signingMethod === "TOTP" ? "#f5f3ff" : "#f0fdf4",
-                        color: doc.signingMethod === "TOTP" ? "#6d28d9" : "#15803d",
+                        background:
+                          doc.signingMethod === "TOTP" ? "#f5f3ff" : "#f0fdf4",
+                        color:
+                          doc.signingMethod === "TOTP" ? "#6d28d9" : "#15803d",
                         padding: "3px 8px",
                         borderRadius: 6,
                       }}
                     >
-                      {doc.signingMethod === "TOTP" ? "🔑 Google Auth" : "📧 Email OTP"}
+                      {doc.signingMethod === "TOTP"
+                        ? "🔑 Google Auth"
+                        : "📧 Email OTP"}
                     </span>
                   </div>
 
                   {/* Status */}
                   {doc.isSigned ? (
-                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 5 }}
+                    >
                       <CheckCircle size={13} color="#16a34a" />
-                      <span style={{ fontSize: 12, fontWeight: 600, color: "#16a34a" }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "#16a34a",
+                        }}
+                      >
                         Signed
                       </span>
                     </div>
                   ) : (
-                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 5 }}
+                    >
                       <Clock size={13} color="#d97706" />
-                      <span style={{ fontSize: 12, fontWeight: 600, color: "#d97706" }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: "#d97706",
+                        }}
+                      >
                         Pending
                       </span>
                     </div>
@@ -526,7 +589,9 @@ export default function DocumentsPage() {
                   Client Recipient
                 </Label>
                 <select
-                  {...register("clientId")}
+                   {...register("clientId", {
+    valueAsNumber: true,
+  })}
                   style={{
                     height: 40,
                     fontSize: 13,
@@ -577,7 +642,13 @@ export default function DocumentsPage() {
                 <Label style={{ fontSize: 12, fontWeight: 600, color: "#555" }}>
                   Required Signature Method
                 </Label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 10,
+                  }}
+                >
                   <label
                     style={{
                       border: "1px solid #e4e4e4",
@@ -590,7 +661,16 @@ export default function DocumentsPage() {
                       background: "#fafafa",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "#111" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#111",
+                      }}
+                    >
                       <input
                         type="radio"
                         value="EMAIL"
@@ -599,7 +679,9 @@ export default function DocumentsPage() {
                       />
                       📧 Email OTP
                     </div>
-                    <span style={{ fontSize: 10, color: "#aaa", paddingLeft: 20 }}>
+                    <span
+                      style={{ fontSize: 10, color: "#aaa", paddingLeft: 20 }}
+                    >
                       Quick 6-digit code sent to client's email.
                     </span>
                   </label>
@@ -616,7 +698,16 @@ export default function DocumentsPage() {
                       background: "#fafafa",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, fontWeight: 600, color: "#111" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: "#111",
+                      }}
+                    >
                       <input
                         type="radio"
                         value="TOTP"
@@ -625,7 +716,9 @@ export default function DocumentsPage() {
                       />
                       🔑 Google Auth
                     </div>
-                    <span style={{ fontSize: 10, color: "#aaa", paddingLeft: 20 }}>
+                    <span
+                      style={{ fontSize: 10, color: "#aaa", paddingLeft: 20 }}
+                    >
                       Maximum security using Google Authenticator.
                     </span>
                   </label>

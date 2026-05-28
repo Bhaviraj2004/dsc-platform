@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, X, TrendingUp } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import api from "@/lib/api/axios";
 
 const filingSchema = z.object({
-  clientId: z.coerce.number().min(1, "Select a client"),
+  clientId: z.number().min(1, "Select a client"),
   type: z.enum(["ITR", "GST", "TDS", "ROC", "DGFT", "MCA"]),
   periodFrom: z.string().min(1, "Required"),
   periodTo: z.string().min(1, "Required"),
@@ -351,9 +351,9 @@ export default function FilingsPage() {
                   style={{
                     fontSize: 11,
                     fontWeight: 600,
-                    color: s.color,
-                    background: s.bg,
-                    border: `1px solid ${s.border}`,
+                    color: s?.color,
+                    background: s?.bg,
+                    border: `1px solid ${s?.border}`,
                     borderRadius: 6,
                     padding: "3px 8px",
                     display: "inline-block",
@@ -474,7 +474,9 @@ export default function FilingsPage() {
                   Client
                 </Label>
                 <select
-                  {...register("clientId")}
+                  {...register("clientId", {
+                    valueAsNumber: true,
+                  })}
                   style={{
                     height: 40,
                     fontSize: 13,
