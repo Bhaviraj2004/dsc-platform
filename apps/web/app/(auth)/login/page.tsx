@@ -159,11 +159,11 @@ export default function LoginPage() {
                 </span>
                 Clients can sign in using{" "}
                 <code className="bg-zinc-200 px-1 py-0.5 rounded font-mono text-zinc-700 font-semibold">
-                  pan@dsc.com
+                  abc@gmail.com
                 </code>{" "}
                 (e.g.{" "}
                 <code className="bg-zinc-200 px-1 py-0.5 rounded font-mono text-zinc-700 font-semibold">
-                  abcde1234f@dsc.com
+                  abcde@gmail.com
                 </code>
                 ) and their{" "}
                 <code className="bg-zinc-200 px-1 py-0.5 rounded font-mono text-zinc-700 font-semibold">
