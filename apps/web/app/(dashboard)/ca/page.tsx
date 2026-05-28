@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, Key, FileText, AlertTriangle, TrendingUp, Clock } from 'lucide-react';
+import { Users, FileText, AlertTriangle, TrendingUp, Clock } from 'lucide-react';
 import api from '@/lib/api/axios';
 import { useAuthStore } from '@/lib/store/auth.store';
 
